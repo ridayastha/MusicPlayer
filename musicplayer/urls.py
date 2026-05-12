@@ -6,16 +6,16 @@ from rest_framework.routers import DefaultRouter
 from backend.views import ArtistViewSet, GenreViewSet, AlbumViewSet, SongViewSet, PlaylistViewSet, FavoriteViewSet
 
 router = DefaultRouter()
-router.register(r'artists', ArtistViewSet)
-router.register(r'genres', GenreViewSet)
-router.register(r'albums', AlbumViewSet)
-router.register(r'songs', SongViewSet)
-router.register(r'playlists', PlaylistViewSet)
-router.register(r'favorites', FavoriteViewSet)
+router.register(r'artists', ArtistViewSet, basename='artist')
+router.register(r'genres', GenreViewSet, basename='genre')
+router.register(r'albums', AlbumViewSet, basename='album')
+router.register(r'songs', SongViewSet, basename='song')
+router.register(r'playlists', PlaylistViewSet, basename='playlist')
+router.register(r'favorites', FavoriteViewSet, basename='favorite')
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include(router.urls)),
+    path('api/v1/', include(router.urls)),
 ]
 
 if settings.DEBUG:

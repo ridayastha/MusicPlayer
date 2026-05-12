@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Artist, Genre, Album, Song, Playlist, Favorite
+from .models import Artist, Genre, Album, Song, Playlist, Favorite, PlaylistSong
 import datetime
 
 class ArtistSerializer(serializers.ModelSerializer):
@@ -15,10 +15,11 @@ class GenreSerializer(serializers.ModelSerializer):
 class SongSerializer(serializers.ModelSerializer):
     genre = serializers.ReadOnlyField(source='genre.name')
     album_title = serializers.ReadOnlyField(source='album.title')
+    formatted_duration = serializers.ReadOnlyField()
 
     class Meta:
         model = Song
-        fields = ['id', 'title', 'album_title', 'genre', 'audio_file', 'track_number', 'duration', 'plays']
+        fields = ['id', 'title', 'album_title', 'genre', 'audio_file', 'track_number', 'duration_seconds','formatted_duration', 'plays','is_explicit']
 
 class AlbumSerializer(serializers.ModelSerializer):
 
@@ -31,28 +32,40 @@ class AlbumSerializer(serializers.ModelSerializer):
         model = Album
         fields = ['id', 'title', 'slug', 'artist', 'cover_art', 'album_type', 'release_date', 'song_count','total_duration','songs']
 
-    def get_total_duration(self, obj):
-        total_seconds = 0
-        for song in obj.songs.all():
-            try:
-                m, s = map(int, song.duration.split(':'))
-                total_seconds += (m * 60) + s
-            except ValueError:
-                continue
-
-        mins, secs = divmod(total_seconds, 60)
-        return f"{mins}:{secs:02d}"
-
     def get_song_count(self, obj):
             return obj.songs.count()
 
+    def get_total_duration(self, obj):
+        total_seconds = sum(song.duration_seconds for song in obj.songs.all())
+        mins, secs = divmod(total_seconds, 60)
+        return f"{mins}:{secs:02d}"
+
+
+class PlaylistSongSerializer(serializers.ModelSerializer):
+
+    song_title = serializers.ReadOnlyField(source='song.title')
+    duration = serializers.ReadOnlyField(source='song.formatted_duration')
+    artist_name = serializers.ReadOnlyField(source='song.album.artist.name')
+
+    class Meta:
+        model = PlaylistSong
+        fields = ['id', 'song', 'song_title','artist_name', 'position', 'added_at', 'duration']
 
 class PlaylistSerializer(serializers.ModelSerializer):
+    user = serializers.ReadOnlyField(source='user.username')
+    songs = PlaylistSongSerializer(source='playlistsong_set', many=True, read_only=True)
+    song_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Playlist
-        fields = '__all__'
+        fields = ['id', 'user', 'name', 'description', 'is_public','song_count', 'songs', 'created_at','updated_at']
+
+    def get_song_count(self, obj):
+        return obj.songs.count()
 
 class FavoriteSerializer(serializers.ModelSerializer):
+    song_title = serializers.ReadOnlyField(source='song.title')
+
     class Meta:
         model = Favorite
-        fields = '__all__'
+        fields = ['id','user','song','song_title','liked_at']
