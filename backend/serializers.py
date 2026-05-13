@@ -13,13 +13,15 @@ class GenreSerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 class SongSerializer(serializers.ModelSerializer):
+    artist_name = serializers.ReadOnlyField(source='album.artist.name')
+    featured_artists = serializers.SlugRelatedField(many=True, read_only=True, slug_field='name')
     genre = serializers.ReadOnlyField(source='genre.name')
     album_title = serializers.ReadOnlyField(source='album.title')
     formatted_duration = serializers.ReadOnlyField()
 
     class Meta:
         model = Song
-        fields = ['id', 'title', 'album_title', 'genre', 'audio_file', 'track_number', 'duration_seconds','formatted_duration', 'plays','is_explicit']
+        fields = ['id', 'title','artist_name' ,'album_title', 'genre','featured_artists','audio_file', 'track_number', 'duration_seconds','formatted_duration', 'plays','is_explicit']
 
 class AlbumSerializer(serializers.ModelSerializer):
 
